@@ -1,0 +1,61 @@
+---
+title: "Assignment4_ngmrcv"
+author: "Nelson Gould, Max Russer, and Ciao Vianna"
+date: "11/12/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+
+# Load packages and read in data
+
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(plotly)
+library(extrafont)
+library(effsize)
+
+lob_traps <- read_csv("lobster_traps.csv")
+lob_size_abun <- read_csv("lobster_size_abundance.csv")
+
+
+```
+
+```{r, include=FALSE}
+# Lobster abundance and fishing pressure (2012 - 2017)
+
+# Describe trends in lobster abundance (counts) and fishing pressure (trap buoys) at the five locations from 2012 - 2017. Ignore transect information - we are only interested in evaluating abundance and pressure on the order of SITE. Note: you are not expected to use regression here - just think of ways to clearly describe annual totals visually and in text, noting important trends, events and differences.
+
+
+# Here I created summary tables for both abundance (based on average count of lobsters at each transect)
+abun_summary <- lob_size_abun %>% 
+  group_by(SITE, YEAR) %>% 
+  summarize(
+    mean_abundance = round(mean(COUNT),2))
+
+trap_summary <- lob_traps %>% 
+  group_by(SITE, YEAR) %>% 
+  summarize(
+    mean_trap = round(mean(TRAPS),2))
+
+# Joining summary tables based on year and site
+
+trap_abun <- full_join(abun_summary, trap_summary) %>% 
+  filter(mean_abundance != "NA")
+
+lob_abun_trap_graph <- ggplot(trap_abun) +
+  geom_col(aes(x = YEAR, y = mean_trap),fill = "skyblue") +
+  geom_col(aes(x = YEAR, y = mean_abundance), fill = "green") +
+  facet_wrap(~ trap_abun$SITE)
+  
+lob_abun_trap_graph           
+
+
+```
+
+
