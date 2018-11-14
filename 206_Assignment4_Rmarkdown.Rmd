@@ -51,11 +51,19 @@ trap_abun <- full_join(abun_summary, trap_summary) %>%
 lob_abun_trap_graph <- ggplot(trap_abun) +
   geom_col(aes(x = YEAR, y = mean_trap),fill = "skyblue") +
   geom_col(aes(x = YEAR, y = mean_abundance), fill = "green") +
-  facet_wrap(~ trap_abun$SITE)
+  facet_wrap(~ trap_abun$SITE) +
+  theme_classic()
   
 lob_abun_trap_graph           
 
 
 ```
 
+```{r}
+
+# Tidy data: expand count data
+
+
+
+```
 
