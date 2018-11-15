@@ -19,6 +19,8 @@ library(kableExtra)
 library(plotly)
 library(extrafont)
 library(effsize)
+library(vcdExtra)
+library(car)
 
 lob_traps <- read_csv("lobster_traps.csv")
 lob_size_abun <- read_csv("lobster_size_abundance.csv")
@@ -36,25 +38,39 @@ lob_size_abun <- read_csv("lobster_size_abundance.csv")
 abun_summary <- lob_size_abun %>% 
   group_by(SITE, YEAR) %>% 
   summarize(
-    mean_abundance = round(mean(COUNT),2))
+    count_abundance = sum(COUNT)) %>% 
+  
 
 trap_summary <- lob_traps %>% 
   group_by(SITE, YEAR) %>% 
   summarize(
-    mean_trap = round(mean(TRAPS),2))
+    count_trap = sum(TRAPS))
 
 # Joining summary tables based on year and site
 
 trap_abun <- full_join(abun_summary, trap_summary) %>% 
-  filter(mean_abundance != "NA")
+  filter(count_abundance != "NA")
+
+# Create data frame with "count" column. Then identify if abundance or trap count to make graph easier to make
+
+trap_abun_onecount <- trap_abun %>% 
+  mutate(count = if_else())
+  
 
 lob_abun_trap_graph <- ggplot(trap_abun) +
-  geom_col(aes(x = YEAR, y = mean_trap),fill = "skyblue") +
-  geom_col(aes(x = YEAR, y = mean_abundance), fill = "green") +
+  geom_col(aes(x = YEAR, y = count_trap), fill = "skyblue", position = "dodge", width = .5) +
+  geom_col(aes(x = YEAR, y = count_abundance), fill = "green", position = "dodge", width = .5) +
+  scale_y_continuous(expand = c(0,0)) + 
   facet_wrap(~ trap_abun$SITE) +
-  theme_classic()
+  theme_classic() +
+  scale_x_continuous(expand = c(0,0)) 
+  #theme(legend = TRUE, legend.position = "right")
+
+ 
   
-lob_abun_trap_graph           
+
+lob_abun_trap_graph 
+
 
 
 ```
@@ -63,7 +79,51 @@ lob_abun_trap_graph
 
 # Tidy data: expand count data
 
+exp_abun <- lob_size_abun %>% 
+  filter(SIZE != "-99999") %>% 
+  expand.dft(freq = "COUNT")
+exp_abun
 
+lob_size_summary <- exp_abun %>% 
+  group_by(SITE) %>% 
+  summarize(
+    mean_size = round(mean(SIZE)),
+    sd_size = round(sd(SIZE),1),
+    sample_size = length(SITE)
+  )
+
+# Exploratory QQ-plots and histograms
+
+hists_size <- ggplot(exp_abun, aes(x = SIZE)) +
+  geom_histogram(aes(fill = SITE))
+hists_size
+
+qq_size <- ggplot(exp_abun, aes(sample = SIZE)) +
+  geom_qq() +
+  facet_wrap(~SITE)
+qq_size  
+
+# Data appear normally distributed
+
+size_graph <- ggplot(lob_size_summary, aes(x = SITE, y = mean_size)) +
+  geom_col(fill = "steelblue", color = "black", width = .7) +
+  geom_errorbar(aes(ymin=mean_size-sd_size, ymax=mean_size+sd_size), width=.15) +
+  theme_classic() +
+  scale_x_discrete(expand = c(0,0)) +
+  scale_y_continuous(expand = c(0,0)) 
+
+size_graph
+
+
+# Using Levene's test for variance between sites
+
+var_test_size <- leveneTest(SIZE ~ SITE, data = exp_abun)
+var_test_size
+
+# We can reject the null hypothesis that sites have equal size variances
+
+site_size_anova <- exp_abun %>% 
+  Anova(lm(SIZE ~ SITE),  type = "II")
+site_size_anova
 
 ```
-
