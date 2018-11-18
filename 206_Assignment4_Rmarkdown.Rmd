@@ -449,3 +449,14 @@ legal_prop_table <- kable(legal_prop_rounded, col.names = c("Legal", "Illegal"))
 legal_prop_table
 
 ```
+
+```{r}
+# Quick call for all final graphs and tables
+
+lob_abun_trap_graph 
+size_graph
+size_col
+legal_prop_table
+
+```
+
