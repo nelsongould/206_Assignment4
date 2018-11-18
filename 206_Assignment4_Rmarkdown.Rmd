@@ -40,14 +40,14 @@ abun_summary <- lob_size_abun %>%
   group_by(SITE, YEAR) %>%
   summarize(
     Count = sum(COUNT),
-    data_type = "Abundance") 
+    data_type = "Lobster Abundance") 
 
 trap_summary <- lob_traps %>% 
   group_by(SITE, YEAR) %>% 
   filter(SITE != "ABUR", SITE != "AHND", SITE != "AHND to AQUE", SITE != "GOLB") %>% 
   summarize(
     Count = sum(TRAPS),
-    data_type = "Trap")
+    data_type = "Lobster Trap")
 
 # Joining summary tables based on year and site
 
@@ -55,13 +55,15 @@ trap_abun <- full_join(abun_summary, trap_summary) %>%
   filter(Count != "NA") 
 
 lob_abun_trap_graph <- ggplot(trap_abun,aes(x = YEAR, y = Count)) +
-  geom_col(aes(fill = data_type), color = "black", position = "dodge", width = .5) +
-  scale_y_continuous(expand = c(0,0)) + 
-  facet_wrap(~ trap_abun$SITE) +
+  geom_col(aes(fill = data_type),  position = "dodge", width = .5) +
+  facet_wrap(~ trap_abun$SITE, scales = "free") +
   theme_classic() +
   scale_x_continuous(expand = c(0,0)) +
-  #theme() +
-  xlab(label = "Year") 
+  scale_y_continuous(expand = c(0,0), limits = c(0,1200)) + 
+  theme(legend.box.background = element_rect(colour = "black"), axis.text.x = element_text(angle = 70, hjust = 1),axis.line=element_line(),legend.position = c(0.85, 0.2)) +
+  xlab(label = "Year") +
+  guides(fill=guide_legend(title="Data Type")) +
+  labs(caption="Data from: Reed, D. 2017. SBC LTER:\nReef: Abundance, size and fishing effort for California Spiny Lobster (Panulirus interruptus), ongoing since 2012.\nSanta Barbara Coastal Long Term Ecological Research Project.\ndoi:10.6073/pasta/81ce20b29614ec99d85d54907eaa3e8e")
 
 lob_abun_trap_graph 
 
@@ -71,10 +73,11 @@ lob_abun_trap_graph
 
 # Tidy data: expand count data
 
-exp_abun <- lob_size_abun %>% 
-  filter(SIZE != "-99999") %>% 
-  expand.dft(freq = "COUNT") %>% 
-  select("YEAR","SITE","SIZE")
+exp_abun1 <- lob_size_abun %>% 
+  filter(SIZE != "-99999")  
+
+exp_abun <- expand.dft(data.frame(exp_abun1), freq = "COUNT") 
+  
 exp_abun
 
 # Lobster size summary table
@@ -84,10 +87,7 @@ lob_size_summary <- exp_abun %>%
   summarize(
     mean_size = round(mean(SIZE)),
     sd_size = round(sd(SIZE),1),
-    sample_size = length(SITE)
-  )
-
-# 
+    sample_size = length(SITE))
 
 # Exploratory QQ-plots and histograms
 
@@ -109,23 +109,26 @@ var_test_size
 
 # We can reject the null hypothesis that sites have equal size variances
 
-site_size_anova <- exp_abun %>% 
-  Anova(lm(SIZE ~ SITE),  type = "II", data = exp_abun, vcov )
-site_size_anova
+site_size_anova <- aov(SIZE ~ SITE, data = exp_abun) 
+summary(site_size_anova)
 
+site_size_tukey <- TukeyHSD(site_size_anova)
+site_size_tukey
+
+tukey_letters<-site_size_tukey$tukey_letters
+stats<-significance$stats
 
 size_graph <- ggplot(lob_size_summary, aes(x = SITE, y = mean_size)) +
   geom_col(fill = "steelblue", color = "black", width = .7) +
   geom_errorbar(aes(ymin=mean_size-sd_size, ymax=mean_size+sd_size), width=.15) +
   theme_classic() +
   scale_x_discrete(expand = c(0,0)) +
-  scale_y_continuous(expand = c(0,0)) +
+  scale_y_continuous(expand = c(0,0),limits = c(0,100)) +
   ylab(label = "Mean Lobster Size (mm)") +
-  xlab(label = "Site")
+  xlab(label = "Site") +
+  geom_text(aes(x=SITE, y=mean_size+sd_size+4,label=c("a","a","a","b","c")), position=position_dodge(width=0.9), size=4) +
+  labs(caption="Data from: Reed, D. 2017. SBC LTER:\nReef: Abundance, size and fishing effort for California Spiny Lobster (Panulirus interruptus), ongoing since 2012.\nSanta Barbara Coastal Long Term Ecological Research Project.\ndoi:10.6073/pasta/81ce20b29614ec99d85d54907eaa3e8e")
 
 size_graph
-
-
-
 
 ```
