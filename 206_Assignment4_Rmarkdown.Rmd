@@ -21,6 +21,7 @@ library(extrafont)
 library(effsize)
 library(vcdExtra)
 library(car)
+library(ggsignif)
 
 lob_traps <- read_csv("lobster_traps.csv")
 lob_size_abun <- read_csv("lobster_size_abundance.csv")
@@ -116,7 +117,6 @@ site_size_tukey <- TukeyHSD(site_size_anova)
 site_size_tukey
 
 tukey_letters<-site_size_tukey$tukey_letters
-stats<-significance$stats
 
 size_graph <- ggplot(lob_size_summary, aes(x = SITE, y = mean_size)) +
   geom_col(fill = "steelblue", color = "black", width = .7) +
@@ -130,5 +130,322 @@ size_graph <- ggplot(lob_size_summary, aes(x = SITE, y = mean_size)) +
   labs(caption="Data from: Reed, D. 2017. SBC LTER:\nReef: Abundance, size and fishing effort for California Spiny Lobster (Panulirus interruptus), ongoing since 2012.\nSanta Barbara Coastal Long Term Ecological Research Project.\ndoi:10.6073/pasta/81ce20b29614ec99d85d54907eaa3e8e")
 
 size_graph
+
+```
+
+
+
+Part 3: Changes in Lobster Size at MPA and non-MPA sites (2012-2017)
+
+```{r}
+#At Isla Vista and Naples Reef, the two protected MPA sites (with zero fishing pressure), how do lobster sizes in 2012 and 2017 compare? At the non-MPA sites?
+
+#Sample size larger then 30?
+#Normally distributed?
+#Equal variances?
+
+#MPA Sites (Naples and Isla Vista), Non-MPA Sites (Arroyo Quemado, Mohawk, and Carpinteria)
+
+#Naples site: 
+
+nples_12 <- exp_abun %>%
+  filter(SITE == "NAPL", YEAR == "2012") %>%
+  pull(SIZE)
+
+sd_nples_12 <- exp_abun %>%
+  filter(SITE == "NAPL", YEAR == "2012") %>%
+  summarize(mean = mean(SIZE), sd = sd(SIZE))
+
+
+nples_17 <- exp_abun %>%
+  filter(SITE == "NAPL", YEAR == "2017") %>%
+  pull(SIZE)
+
+sd_nples_17 <- exp_abun %>%
+  filter(SITE == "NAPL", YEAR == "2017") %>%
+  summarize(mean = mean(SIZE), sd = sd(SIZE))
+
+#F-test to compare variances at Naples site.
+#FO: Ratio of variances is equal to 1
+#FA: Ratio of variances is not equal to 1
+
+nples_f <- var.test(nples_17, nples_12)
+nples_f
+
+#Variances are equal (p = 0.666)
+
+#Run a two sample, one-sided t-test (variances equal)
+#HO: Mean lobster size in 2012 and 2017 are equal
+#HA: Mean lobster size in 2017 is larger than in 2012
+
+nples_t <- t.test(nples_17, nples_12, var.equal = TRUE)
+nples_t
+
+#Means are equal (p=  0.628, mean nples_12 = 74.6, mean nples_17 = 77.2)
+
+#Test for effect size (Cohen's D)
+
+nples_effect <- cohen.d(nples_17, nples_12)
+nples_effect
+
+#Effect size is small (-0.222)
+
+#power <- pwr.t.test(n = x, d = NULL, sig.level = 0.05, power = 0.8) if Cohen's d is negative
+
+```
+
+```{r}
+
+#Isla Vista Site:
+
+iv_12 <- exp_abun %>%
+  filter(SITE == "IVEE", YEAR == "2012") %>%
+  pull(SIZE)
+
+sd_iv_12 <- exp_abun %>%
+  filter(SITE == "IVEE", YEAR == "2012") %>%
+  summarize(mean = mean(SIZE), sd = sd(SIZE))
+
+iv_17 <- exp_abun %>%
+  filter(SITE == "IVEE", YEAR == "2017") %>%
+  pull(SIZE)
+
+sd_iv_17 <- exp_abun %>%
+  filter(SITE == "IVEE", YEAR == "2017") %>%
+  summarize(mean = mean(SIZE), sd = sd(SIZE))
+
+#F-test to compare variances at IV site.
+#FO: Ratio of variances is equal to 1
+#FA: Ratio of variances is not equal to 1
+
+iv_f <- var.test(iv_17, iv_12)
+iv_f
+
+#Variances are equal (p = 0.1595)
+
+#Run a two sample, one-sided t-test (variances equal)
+#HO: Mean lobster size in 2012 and 2017 are equal
+#HA: Mean lobster size in 2017 is larger than in 2012
+
+iv_t <- t.test(iv_17, iv_12, var.equal = TRUE)
+iv_t
+
+#Mean lobster sizes are greater in 2017 than in 2012 (p = 0.029, mean iv_17 = 72.4, mean iv_12 = 66.3)
+
+#Test for effect size (Cohen's D)
+
+iv_effect <- cohen.d(iv_12, iv_17)
+iv_effect
+
+#Effect size is small (0.393)
+
+```
+
+```{r}
+
+#Arroyo Quemado Site:
+
+aq_12 <- exp_abun %>%
+  filter(SITE == "AQUE", YEAR == "2012") %>%
+  pull(SIZE)
+
+sd_aq_12 <- exp_abun %>%
+  filter(SITE == "AQUE", YEAR == "2012") %>%
+  summarize(mean = mean(SIZE), sd = sd(SIZE))
+
+aq_17 <- exp_abun %>%
+  filter(SITE == "AQUE", YEAR == "2017") %>%
+  pull(SIZE)
+
+sd_aq_17 <- exp_abun %>%
+  filter(SITE == "AQUE", YEAR == "2017") %>%
+  summarize(mean = mean(SIZE), sd = sd(SIZE))
+ 
+#F-test to compare variances at AQ site.
+#FO: Ratio of variances is equal to 1
+#FA: Ratio of variances is not equal to 1
+
+aq_f <- var.test(aq_17, aq_12)
+aq_f
+
+#Ratio of variances is equal to one (barley, p = 0.0697)
+
+
+#Run a two sample, one-sided t-test (variances equal)
+#HO: Mean lobster size in 2012 and 2017 are equal
+#HA: Mean lobster size in 2017 is larger than in 2012
+
+aq_t <- t.test(aq_17, aq_12, var.equal = TRUE)
+aq_t
+
+#Means are equal (p = 0.142, mean aq_17 = 74.0, mean aq_12 = 71.0)
+
+#Test for effect size (Cohen's D)
+
+aq_effect <- cohen.d(aq_12, aq_17)
+aq_effect
+
+#Effect size is small (-0.248)
+
+```
+
+```{r}
+
+#Mohawk Site:
+
+mk_12 <- exp_abun %>%
+  filter(SITE == "MOHK", YEAR == "2012") %>%
+  pull(SIZE)
+
+sd_mk_12 <- exp_abun %>%
+  filter(SITE == "MOHK", YEAR == "2012") %>%
+  summarize(mean = mean(SIZE), sd = sd(SIZE))
+
+mk_17 <- exp_abun %>%
+  filter(SITE == "MOHK", YEAR == "2017") %>%
+  pull(SIZE)
+
+sd_mk_17 <- exp_abun %>%
+  filter(SITE == "MOHK", YEAR == "2017") %>%
+  summarize(mean = mean(SIZE), sd = sd(SIZE))
+
+#F-test to compare variances at AQ site.
+#FO: Ratio of variances is equal to 1
+#FA: Ratio of variances is not equal to 1
+
+mk_f <- var.test(mk_17, mk_12)
+mk_f
+
+#Variances are equal (p = 0.905)
+
+#Run a two sample, one-sided t-test (variances equal)
+#HO: Mean lobster size in 2012 and 2017 are equal
+#HA: Mean lobster size in 2017 is larger than in 2012
+
+mk_t <- t.test(mk_17, mk_12, var.equal = TRUE)
+mk_t
+
+#Means are equal (p = 0.904, mean mk_17 = 72.9, mean mk_12 = 76.1)
+# ? Use two sided t-test; alternative = "less" t-test? 
+
+#Test for effect size (Cohen's D)
+
+mk_effect <- cohen.d(mk_12, mk_17)
+mk_effect
+
+#Effect size is small (0.293)
+
+
+```
+
+```{r}
+
+#Carpinteria Site
+
+carp_12 <- exp_abun %>%
+  filter(SITE == "CARP", YEAR == "2012") %>%
+  pull(SIZE)
+
+sd_carp_12 <- exp_abun %>%
+  filter(SITE == "CARP", YEAR == "2012") %>%
+  summarize(mean = mean(SIZE), sd = sd(SIZE))
+
+carp_17 <- exp_abun %>%
+  filter(SITE == "CARP", YEAR == "2017") %>%
+  pull(SIZE)
+
+sd_carp_17 <- exp_abun %>%
+  filter(SITE == "CARP", YEAR == "2017") %>%
+  summarize(mean = mean(SIZE), sd = sd(SIZE))
+
+#F-test to compare variances at Carp site.
+#FO: Ratio of variances is equal to 1
+#FA: Ratio of variances is not equal to 1
+
+carp_f <- var.test(carp_17, carp_12)
+carp_f
+
+#Ratio of variances is equal to 1 (p = 0.186)
+
+#Run a two sample, one-sided t-test (variances equal)
+#HO: Mean lobster size in 2012 and 2017 are equal
+#HA: Mean lobster size in 2017 is larger than in 2012
+
+carp_t <- t.test(carp_17, carp_12, var.equal = TRUE)
+carp_t
+
+#Means are equal (p = 0.476, mean carp_17 = 74.5, mean carp_12 = 74.4)
+# ? Use two sided t-test; alternative = "less" t-test?
+
+#Test for effect size (Cohen's D)
+
+carp_effect <- cohen.d(carp_12, carp_17)
+carp_effect
+
+#Effect size is negligible (-0.008)
+
+```
+
+```{r}
+
+#Create graph showing data
+
+size <- exp_abun %>%
+  filter(SITE == "NAPL" | SITE == "IVEE" | SITE == "AQUE" | SITE == "MOHK" | SITE == "CARP", YEAR == "2012" | YEAR == "2017") %>%
+  mutate(YEAR = as.factor(YEAR)) %>% 
+  group_by(SITE, YEAR) %>% 
+  summarize(mean_size = mean(SIZE), sd_size = sd(SIZE))
+
+size_col <- ggplot(size, aes(x = SITE, y = mean_size, group = YEAR)) +
+  geom_col(aes(fill = YEAR), color = "black", position = "dodge", width = 0.75) +
+  scale_fill_manual(values = c("lightsteelblue1","steelblue4")) +
+  theme_classic() +
+  geom_errorbar(aes(ymin=mean_size-sd_size, ymax=mean_size+sd_size), width=.15, position = position_dodge(0.75)) +
+  labs(x = "Site", y = "Mean lobster carpace length (mm)") +
+  scale_y_continuous(expand = c(0,0), limit = c(0,100)) +
+  annotate("text", x = 4, y = 90, label = "*",size = 7) +
+  guides(fill=guide_legend(title="Year")) +
+  theme(legend.box.background = element_rect(colour = "black"))+
+  labs(caption="Data from: Reed, D. 2017. SBC LTER:\nReef: Abundance, size and fishing effort for California Spiny Lobster (Panulirus interruptus), ongoing since 2012.\nSanta Barbara Coastal Long Term Ecological Research Project.\ndoi:10.6073/pasta/81ce20b29614ec99d85d54907eaa3e8e")
+
+
+size_col
+
+#Need to:
+#1. Change column colors
+#2. Space inbetween site columns
+#2. What else to add to graphs?
+#3. Utilize table?
+
+```
+
+Part 4: Proportions of legal lobsters at the 5 sites in 2017
+
+```{r}
+
+
+legal_seafood <- exp_abun %>% 
+  filter(YEAR == "2017") %>%
+  mutate(legality = ifelse(SIZE < 82.6, "ILLEGAL", "LEGAL")) %>%
+  select(SITE, legality) %>% 
+  count(SITE, legality) %>%
+  spread(legality, n) %>%
+  select(-SITE)
+
+rownames(legal_seafood) <- c("AQUE", "CARP", "IVEE", "MOHK", "NAPL")
+
+legal_prop <- prop.table(as.matrix(legal_seafood), 1)
+
+legal_x2 <- chisq.test(legal_seafood)
+legal_x2
+
+legal_prop_rounded <- legal_prop %>% 
+  round(2)
+
+legal_prop_table <- kable(legal_prop_rounded, col.names = c("Legal", "Illegal")) %>% 
+  kable_styling(bootstrap_options = "striped", full_width = F) %>% 
+  add_header_above(c(" " = 1, "Lobster Proportion" = 2)) 
+
+legal_prop_table
 
 ```
